@@ -2,15 +2,27 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    width: 100%;
-    max-width: 500px;
+    width: 50vw;
+    height: 20vw;
+    min-width: 300px;
+    min-height: 200px;
+    /*max-width: 500px;*/
     position: relative;
 }
 
 #disp{
-    display: flex;
     font-size: xx-large;
     flex-grow: 1;
+    text-align: right;
+    border-color: coral;
+    border-style: solid;
+}
+#crnt{
+    font-size: xx-large;
+    padding: 0;
+}
+#past{
+    font-size: small;
 }
 
 #keypad{
@@ -18,29 +30,40 @@
     flex-direction: row;
     flex-grow: 3;
     position: relative;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
-/*#opPad{
-    display: inline-flex;
+#opPad{
+    display: flex;
     flex-wrap: wrap;
-}*/
+    /*flex-direction: column;*/
+    justify-items: center;
+    width:50%
+}
 
 #numpad{
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    width:75%;
+    width:50%;
 }
 
 button{
-    width:33%;
+    
+    font-size: larger;
 }
 .number{
-    font-size: larger;
-    /*width:33%;*/
+    background-color: cornsilk;
+    width:33%;
 }
 
 .operator{
-    font-size: larger;
+    background-color: coral;
+    width: 25%;
+    
+}
+
+#equals{
+    flex-grow: 4;
+    background-color: cornflowerblue;
 }

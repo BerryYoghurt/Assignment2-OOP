@@ -6,24 +6,22 @@ const app = Vue.createApp({
                 hasDecimal:false,
                 isPositive:true
             },
-            pastOperand:"0",
+            pastOperands:[],
             numbers:["7","8","9","4","5","6","1","2","3","+/-","0","."],
             operators:[
-                {id:"+",action: this.add},
-                {id:"-",action: this.subtract},
-                {id:"*",action: this.multiply},
-                {id:"/",action: this.divide},
-                {id:'\u221Ax',action: this.sqrt},
-                {id:'x^2',action: this.square},
-                {id:'1/x',action: this.reciprocal},
-                {id:'\u232B',action: this.delete},
-                {id:"=", action: this.evaluate},
-                {id:"C", action: this.resetCalc}
+                {id:"add",label:"+",action: this.add},
+                {id:"subtract",label:"-",action: this.subtract},
+                {id:"multiply",label:"*",action: this.multiply},
+                {id:"divide",label:"/",action: this.divide},
+                {id:"percent",label: "%", action: this.percent},
+                {id:"sqrt",label:'\u221Ax',action: this.sqrt},
+                {id:"square",label:'x^2',action: this.square},
+                {id:"reciprocal",label:'1/x',action: this.reciprocal},
+                {id:"delete",label:'\u232B',action: this.delete},
+                {id:"cancel",label:"C", action: this.resetCalc},
+                {id:"equals",label:"=", action: this.evaluate}
             ],
-            currentAction:{
-                name:null,
-                isUnary:false
-            },
+            actions:[],
             error:false
         }
     },
@@ -49,118 +47,107 @@ const app = Vue.createApp({
                     this.currentOperand.hasDecimal = false;
                 }
             }
+            if(this.currentOperand.mag.length == 0){
+                this.currentOperand.mag = "0";
+            }
         },
         add(){
-            if(this.currentAction.name){
-                this.evaluate();
-            }
-            this.currentAction.name = "add?";
-            this.currentAction.isUnary = false;
-            this.pastOperand = this.crntOperand;
+            this.actions.push(createAction("+","add?",false));
+            this.pastOperands.push(this.crntOperand);
             this.resetCurrentOperand();
         },
         subtract(){
-            if(this.currentAction.name){
-                this.evaluate();
-            }
-            this.currentAction.name = "subtract?";
-            this.currentAction.isUnary = false;
-            this.pastOperand = this.crntOperand;
+            this.actions.push(createAction("-","subtract?",false));
+            this.pastOperands.push(this.crntOperand);
             this.resetCurrentOperand();
         },
         multiply(){
-            if(this.currentAction.name){
-                this.evaluate();
-            }
-            this.currentAction.name = "multiply?";
-            this.currentAction.isUnary = false;
-            this.pastOperand = this.crntOperand;
+            this.actions.push(createAction("*","multiply?",false));
+            this.pastOperands.push(this.crntOperand);
             this.resetCurrentOperand();
         },
         divide(){
-            if(this.currentAction.name){
-                this.evaluate();
-            }
-            this.currentAction.name = "divide?";
-            this.isUnaryAction = false;
-            this.pastOperand = this.crntOperand;
+            this.actions.push(createAction("/","divide?",false));
+            this.pastOperands.push(this.crntOperand);
             this.resetCurrentOperand();
         },
-        reciprocal(){
-            let tempAction = this.currentAction;
-            this.currentAction.name = "divide?";
-            this.currentAction.isUnary = false;
-            let tempPast = this.pastOperand;
-            this.pastOperand = "1";
+        percent(){
+            this.pastOperands.push(this.crntOperand);
+            this.actions.push(createAction("%","percent?",false));
+            this.currentOperand = parseResponse(this.pastOperands[this.pastOperands.length-2]);
             this.evaluate();
-            this.currentAction = tempAction;
-            this.pastOperand = tempPast;
+        },
+        reciprocal(){
+            this.pastOperands.push("1");
+            this.actions.push(createAction("/","divide?",false));
+            this.evaluate();
         },
         square(){
-            let tempAction = this.currentAction;
-            this.currentAction.name = "square?";
-            this.currentAction.isUnary = true;
+            this.actions.push(createAction("^2","square?",true));
             this.evaluate();
-            this.currentAction = tempAction;
         },
         sqrt(){
-            let tempAction = this.currentAction;
-            this.currentAction.name = "sqrt?";
-            this.currentAction.isUnary = true;
+            this.actions.push(createAction("sqrt","sqrt?",true));
             this.evaluate();
-            this.currentAction = tempAction;
         },
+        /**evaluates the currentAction.
+         * If current action is unary, 
+         * the current operand is used and replaced by the result
+         * If the current action is binary,
+         * the request is sent with the past operand as x and current operand as y
+         * Then the past operand is set to the current operand
+         * and the current operand is set to the response
+         */
         evaluate(){
-            if(this.currentAction.name)
+            if(this.actions.length > 0)
             {
-                if(this.currentAction.isUnary){
-                    fetch("http://localhost:8080/"+this.currentAction.name + new URLSearchParams({
-                        x:this.crntOperand
-                    }).toString())
-                        .then(
+                let action = this.actions.pop();
+                let request = "http://localhost:8080/"+action.name;
+                if(action.isUnary){
+                    request +=new URLSearchParams({x:this.crntOperand}).toString();
+                    
+                    fetch(request)
+                    .then(
                         response => {
                             this.error = !response.ok;
                             return response.json();})
                             .then(
                                 data =>{
-                                    this.parseResponse(data);
+                                    this.currentOperand = parseResponse(data);
                                 }
-                            )
-                    
+                                )
                 }else{
-                    fetch("http://localhost:8080/"+this.currentAction.name + new URLSearchParams({
-                        x:this.pastOperand,
+                    let pOp = this.pastOperands.pop();
+
+                    request += new URLSearchParams({
+                        x:pOp,
                         y:this.crntOperand
-                    }).toString())
-                        .then(
+                    }).toString();
+
+                    fetch(request)
+                    .then(
                         response => {
                             this.error = !response.ok;
                             return response.json();})
                             .then(
                                 data => {
-                                    this.pastOperand = this.crntOperand;
-                                    this.parseResponse(data);
+                                    //this.pastOperand = this.crntOperand;
+                                    this.currentOperand = parseResponse(data);
                                 }
-                            )
-                }
-                this.currentAction.name = null;
+                                )
             }
-
+                
+                
+            }
         },
         resetCurrentOperand(){
-            this.currentOperand.mag = "0";
-            this.currentOperand.isPositive = true;
-            this.currentOperand.hasDecimal = false;
-        },
-        parseResponse(data){
-            this.currentOperand.mag = String(Math.abs(data));
-            this.currentOperand.isPositive = data >= 0;
-            this.currentOperand.hasDecimal = Math.floor(data) != Math.ceil(data);
+            this.currentOperand = parseResponse(0);
         },
         resetCalc(){
             this.resetCurrentOperand();
-            this.currentAction.name = null;
+            this.actions = [];
             this.error = false;
+            this.pastOperands = [];
         }
     },
     computed:{
@@ -168,6 +155,26 @@ const app = Vue.createApp({
             if(!this.error)
                 return (this.currentOperand.isPositive?'':'-')+this.currentOperand.mag;
             else return "E";
+        },
+        pastCalcs(){
+            let ans = "";
+            for(i = 0; i < this.pastOperands.length; i++){//only want to output as many actions as there are operands
+                ans += this.pastOperands[i] + this.actions[i].label;
+            }
+            return ans;
         }
     }
 })
+
+
+function parseResponse(data){
+    let ans ={mag:"",isPositive:false,hasDecimal:false};
+    ans.mag = String(Math.abs(data));
+    ans.isPositive = data >= 0;
+    ans.hasDecimal = Math.floor(data) != Math.ceil(data);
+    return ans;
+}
+
+function createAction(label = "", name = "",isUnary = false){
+    return {label: label, name:name, isUnary:isUnary};
+}

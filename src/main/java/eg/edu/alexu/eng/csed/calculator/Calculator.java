@@ -67,4 +67,15 @@ public class Calculator {
         }
         return ResponseEntity.status(HttpStatus.INSUFFICIENT_STORAGE).body(ans);
     }
+
+    @GetMapping("/percent")
+    public ResponseEntity<Double> percent(@RequestParam(value = "x") double x, @RequestParam(value = "y") double y){
+        double ans = (x/100)*y;
+        if(ans < Double.POSITIVE_INFINITY && ans > Double.NEGATIVE_INFINITY){
+            return ResponseEntity.ok(ans);
+        }else{
+            return ResponseEntity.status(HttpStatus.INSUFFICIENT_STORAGE).body(ans);
+        }
+
+    }
 }

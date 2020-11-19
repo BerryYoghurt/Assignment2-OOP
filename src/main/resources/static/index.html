@@ -9,19 +9,11 @@
 <body>
 <div id="app">
     <div id = "disp">
-        {{crntOperand}}
+        <p id="crnt">{{crntOperand}}</p>
+        <p id="past">{{pastCalcs}}</p>
     </div>
     <div id = "keypad">
-        <!--<div id = "opPad">-->
-            <button
-            type = button
-            class = "operator"
-            v-for="op in operators"
-            v-bind:id="op.id"
-            v-on:click="op.action">
-            {{op.id}}
-            </button>
-        <!--</div>-->
+        
         <div id = "numpad">
             <button 
             type = button
@@ -31,7 +23,16 @@
             {{num}}
             </button>
         </div>
-        
+        <div id = "opPad">
+            <button
+            type = button
+            class = "operator"
+            v-for="op in operators"
+            v-bind:id="op.id"
+            v-on:click="op.action">
+            {{op.label}}
+            </button>
+        </div>
         
     </div>
 </div>
