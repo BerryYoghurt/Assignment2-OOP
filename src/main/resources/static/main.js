@@ -34,7 +34,11 @@ const app = Vue.createApp({
                 }
             }
             else if(input != "+/-"){
-                this.currentOperand.mag+=input;
+                if(this.currentOperand.mag === "0"){
+                    this.currentOperand.mag = input;
+                }else{
+                    this.currentOperand.mag+=input;
+                }
             }else{
                 this.currentOperand.isPositive = !this.currentOperand.isPositive;
             }
